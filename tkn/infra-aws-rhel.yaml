@@ -26,7 +26,7 @@ spec:
     - name: host-info
       emptyDir: {}
 
-  params: 
+  params:
     - name: secret-aws-credentials
       description: |
         ocp secret holding the aws credentials. Secret should be accessible to this task.
@@ -43,7 +43,7 @@ spec:
           region: ${region}
           bucket: ${bucket}
     - name: secret-rh-credentials
-      default: 'non-existent-secret'
+      default: "non-existent-secret"
       description: |
         ocp secret holding the credentials for a rh user to manage RHEL subscription.
 
@@ -61,10 +61,10 @@ spec:
           password: ${password}
     - name: id
       description: identifier for the provisioned environment
-    - name: operation 
+    - name: operation
       description: operation to execute within the infrastructure. Current values (create, destroy)
 
-    # Secret result 
+    # Secret result
     # naming
     - name: host-access-secret-name
       type: string
@@ -99,50 +99,56 @@ spec:
     # VM type params
     - name: arch
       description: Architecture for the machine. Allowed x86_64 or arm64 (default "x86_64")
-      default: 'x86_64'
-    - name: cpus 
+      default: "x86_64"
+    - name: compute-sizes
+      description: Comma seperated list of sizes for the machines to be requested. If set this takes precedence over compute by args
+      default: "''"
+    - name: cpus
       description: Number of CPUs for the cloud instance (default 8)
-      default: '8'
+      default: "8"
+    - name: gpu-manufacturer
+      description: Manufacturer company name for GPU. (i.e. NVIDIA)
+      default: "''"
+    - name: gpus
+      description: Number of GPUs for the cloud instance (default 0)
+      default: "0"
     - name: memory
       description: Amount of RAM for the cloud instance in GiB (default 64)
-      default: '64'
+      default: "64"
     - name: nested-virt
       description: Use cloud instance that has nested virtualization support
-      default: 'false'
-    - name: vm-types
-      description: "Specific set of vm-types. Note vm-type should match requested arch. Also if --spot flag is used set at least 3 types comma separated and without spaces."
-      default: "''"  
+      default: "false"
     - name: spot
       description: Check best spot option to spin the machine and will create resources on that region.
-      default: 'true'
-    - name: spot-increase-rate
-      description: Percentage to be added on top of the current calculated spot price to increase chances to get the machine.
-      default: '20'
+      default: "true"
     - name: spot-eviction-tolerance
-      description: | 
+      description: |
         if spot is enable we can define the minimum tolerance level of eviction. 
         Allowed value are: lowest, low, medium, high or highest
-      default: 'lowest'
+      default: "lowest"
+    - name: spot-increase-rate
+      description: Percentage to be added on top of the current calculated spot price to increase chances to get the machine.
+      default: "20"
 
     # RHEL params
     - name: version
       description: this task will spin a RHEL image. This param will set the version for it. Default 9.4.
-      default: '9.4'
+      default: "9.4"
     - name: profile-snc
       description: |
         This param will setup RHEL with SNC profile. Setting up all requirements to run https://github.com/crc-org/snc
-      default: 'false'
-    
+      default: "false"
+
     # Topology params
     - name: airgap
       description: |
-          Set the machine on an airgap scenario. 
+        Set the machine on an airgap scenario. 
 
-          If airgap is set an extra VM is created acting as bastion, information to access bastion is also
-          added to the output folder.
+        If airgap is set an extra VM is created acting as bastion, information to access bastion is also
+        added to the output folder.
 
-          To access the target machine we need to go through the bastion
-      default: 'false'
+        To access the target machine we need to go through the bastion
+      default: "false"
 
     # Metadata params
     - name: tags
@@ -153,10 +159,10 @@ spec:
     - name: debug
       description: |
         Warning setting this param to true expose credentials 
-        
+
         The parameter is intended to add verbosity on the task execution and also print credentials on stdout
         to easily access to remote machice
-      default: 'false'
+      default: "false"
 
   results:
     - name: host-access-secret
@@ -219,15 +225,18 @@ spec:
         if [[ $(params.operation) == "create" ]]; then
           cmd+="--conn-details-output /opt/host-info "
           cmd+="--arch $(params.arch) "
-          cmd+="--cpus $(params.cpus) "
-          cmd+="--memory $(params.memory) "
+          if [[ $(params.compute-sizes) != "" ]]; then
+            cmd+="--compute-sizes $(params.compute-sizes) "
+          else
+            cmd+="--cpus $(params.cpus) "
+            cmd+="--memory $(params.memory) "
+            cmd+="--gpus $(params.gpus) "
+            cmd+="--gpu-manufacturer $(params.gpu-manufacturer) "
+          fi
           if [[ $(params.nested-virt) == "true" ]]; then
             cmd+="--nested-virt "
           fi
           cmd+="--version $(params.version) "
-          if [[ $(params.vm-types) != "" ]]; then
-            cmd+="--vm-types $(params.vm-types) "
-          fi
           if [[ -f /opt/rh-account-secret/user ]]; then
             cmd+="--rh-subscription-username $(cat /opt/rh-account-secret/user) "
           fi
@@ -242,8 +251,8 @@ spec:
           cmd+="--tags $(params.tags) "
         fi
         eval "${cmd}"
-        
-      resources:      
+
+      resources:
         requests:
           memory: "200Mi"
           cpu: "100m"
@@ -260,7 +269,7 @@ spec:
         - name: OWNER_NAME
           value: $(params.ownerName)
         - name: OWNER_UID
-          value: $(params.ownerUid)  
+          value: $(params.ownerUid)
       volumeMounts:
         - name: host-info
           mountPath: /opt/host-info
@@ -300,7 +309,7 @@ spec:
         if [[ $(params.debug) == "true" ]]; then
           cat /opt/host-info/*
         fi
-        
+
         NAME=$(oc create -f host-info.yaml -o=jsonpath='{.metadata.name}')
         echo -n "${NAME}" | tee $(results.host-access-secret.path)   
-        fi 
+        fi
