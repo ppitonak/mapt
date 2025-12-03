@@ -23,7 +23,7 @@ spec:
       emptyDir: {}
 
   params:
-    # mapt params
+    # Credentials
     - name: secret-aws-credentials
       description: |
         ocp secret holding the aws credentials. Secret should be accessible to this task.
@@ -42,6 +42,8 @@ spec:
           secret-key: ${secret_key}
           region: ${region}
           bucket: ${bucket}
+
+    # mapt params
     - name: id
       description: identifier for the provisioned environment
     - name: operation
@@ -138,6 +140,11 @@ spec:
       default: ""
 
     # Control params
+    - name: cleanup-state
+      description: |
+        Cleanup the state of the machine after the operation is completed. Only used when operation is destroy.
+        Allowed values: true, false
+      default: "true"
     - name: debug
       description: |
         Warning setting this param to true exposes partially masked credentials
@@ -253,6 +260,11 @@ spec:
           fi
           cmd+="--tags '$(params.tags)' "
         fi
+
+        if [[ "$(params.operation)" == "destroy" ]]; then
+          cmd+="--cleanup-state='$(params.cleanup-state)' "
+        fi
+
         eval "${cmd}"
       resources:
         requests:

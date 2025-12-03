@@ -109,7 +109,7 @@ func getMacDestroy() *cobra.Command {
 				&maptContext.ContextArgs{
 					Debug:        viper.IsSet(params.Debug),
 					DebugLevel:   viper.GetUint(params.DebugLevel),
-					CleanupState: viper.IsSet(params.CleanupState),
+					CleanupState: viper.GetBool(params.CleanupState),
 				},
 				viper.GetString(awsParams.MACDHID))
 		},

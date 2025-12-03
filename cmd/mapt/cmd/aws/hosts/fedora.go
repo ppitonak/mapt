@@ -97,7 +97,7 @@ func getFedoraDestroy() *cobra.Command {
 				DebugLevel:   viper.GetUint(params.DebugLevel),
 				Serverless:   viper.IsSet(params.Serverless),
 				ForceDestroy: viper.IsSet(params.ForceDestroy),
-				CleanupState: viper.IsSet(params.CleanupState),
+				CleanupState: viper.GetBool(params.CleanupState),
 			})
 		},
 	}

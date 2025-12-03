@@ -110,7 +110,7 @@ func getWindowsDestroy() *cobra.Command {
 				Debug:        viper.IsSet(params.Debug),
 				DebugLevel:   viper.GetUint(params.DebugLevel),
 				Serverless:   viper.IsSet(params.Serverless),
-				CleanupState: viper.IsSet(params.CleanupState),
+				CleanupState: viper.GetBool(params.CleanupState),
 			})
 		},
 	}

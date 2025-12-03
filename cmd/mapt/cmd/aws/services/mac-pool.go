@@ -102,7 +102,7 @@ func destroyMP() *cobra.Command {
 				BackedURL:    viper.GetString(params.BackedURL),
 				Debug:        viper.IsSet(params.Debug),
 				DebugLevel:   viper.GetUint(params.DebugLevel),
-				CleanupState: viper.IsSet(params.CleanupState),
+				CleanupState: viper.GetBool(params.CleanupState),
 			})
 		},
 	}
